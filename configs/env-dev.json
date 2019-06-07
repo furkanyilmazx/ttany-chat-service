@@ -1,0 +1,10 @@
+{
+    "env-prefix": "ttany-chat-service",
+    "database": {
+        "driver": "postgres",
+        "connection": "host=localhost port=5432 user=postgres dbname=postgres password=153415 sslmode=disable",
+        "logs": true,
+        "log-mode": "TRACE"
+    }
+}
+  
