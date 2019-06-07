@@ -10,7 +10,9 @@ func LoadLogConfig() {
 	if deployMode == "" || deployMode == "prod" {
 		log.SetFormatter(&log.JSONFormatter{})
 	} else {
-		log.SetFormatter(&log.TextFormatter{})
+		log.SetFormatter(&log.TextFormatter{
+			ForceColors: true,
+		})
 	}
 
 	log.SetReportCaller(true)
