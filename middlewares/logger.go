@@ -15,9 +15,11 @@ func LoggerMiddleware() gin.HandlerFunc {
 		// after request
 		latency := time.Since(t)
 		status := c.Writer.Status()
+
 		log.WithFields(log.Fields{
-			"latency": latency.String(),
+			"latency": latency,
 			"status":  status,
+			"handler": c.HandlerName(),
 		}).Infoln()
 	}
 }
