@@ -4,12 +4,11 @@ import (
 	"ttany-chat-service/controllers"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 )
 
-func loadChatRoutes(r *gin.RouterGroup, db *gorm.DB) {
+func loadChatRoutes(r *gin.RouterGroup) {
 	chatRoutes := r.Group("/c")
-	chatController := controllers.ChatController{DB: db}
-	chatRoutes.GET("/", chatController.GetChatRoomsController)
-	chatRoutes.GET("/:room_id", chatController.CreateChatRoomController)
+	chatRoutes.GET("", controllers.GetChatRooms)
+	chatRoutes.POST("", controllers.CreateChatRoom)
+	chatRoutes.GET(":room_id", controllers.GetChatRoomWithRoomID)
 }

@@ -7,7 +7,7 @@
         "log-mode": "TRACE"
     },
     "server": {
-        "port": 8080
+        "port": "localhost:8088"
     }
 }
   

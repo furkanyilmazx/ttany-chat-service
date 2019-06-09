@@ -14,7 +14,7 @@ func LoadLogConfig() {
 			ForceColors: true,
 		})
 	}
-
+	log.SetLevel(log.DebugLevel)
 	log.SetReportCaller(true)
 
 }

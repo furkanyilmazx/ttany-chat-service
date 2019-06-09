@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"net/http"
 	"ttany-chat-service/models"
 
 	"github.com/jinzhu/gorm"
@@ -9,36 +10,42 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ChatController struct {
-	DB *gorm.DB
-}
-
-func (ch *ChatController) GetChatRoomsController(c *gin.Context) {
-	var rooms = []models.Room{}
-	if ch.DB.Preload("Participants").Find(&rooms).RecordNotFound() {
-		log.Error("NOT FOUND")
-		c.AbortWithStatus(404)
+func GetChatRooms(c *gin.Context) {
+	var rooms = models.Rooms{}
+	if err := rooms.AllRooms(); err != nil {
+		log.Error("Error Occured", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
 	log.Debug(rooms)
-	c.JSON(200, &rooms)
+	c.JSON(http.StatusOK, &rooms)
 }
 
-func (ch *ChatController) CreateChatRoomController(c *gin.Context) {
+func CreateChatRoom(c *gin.Context) {
+	var room = models.Room{}
+	if err := c.ShouldBindJSON(&room); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	log.Info(room)
+	if err := room.CreateRoom(); err != nil {
+		c.AbortWithStatus(http.StatusConflict)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "created"})
+}
+
+func GetChatRoomWithRoomID(c *gin.Context) {
 	roomID := c.Param("room_id")
 	var room = models.Room{}
-	var participants = []models.Participant{}
-	if ch.DB.Where("room_id = ?", roomID).First(&room).RecordNotFound() {
-		log.Error("NOT FOUND")
-		c.AbortWithStatusJSON(404, []string{})
+	if err := room.GetByRoomID(roomID); gorm.IsRecordNotFoundError(err) {
+		log.Error("NOT FOUND", err)
+		c.AbortWithStatus(http.StatusNotFound)
 		return
-	} else {
-		if ch.DB.Model(&room).Association("Participants").Find(&participants).Error != nil {
-			log.Error("NOT FOUND")
-			c.AbortWithStatusJSON(404, []string{})
-			return
-		} else {
-			room.Participants = participants
-		}
+	} else if err != nil {
+		log.Error("Error Occured", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
-	c.JSON(200, &room)
+	c.JSON(http.StatusOK, &room)
 }
