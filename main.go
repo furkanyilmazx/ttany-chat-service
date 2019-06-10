@@ -9,9 +9,8 @@ import (
 	"runtime"
 	"syscall"
 	"time"
+	"ttany-chat-service/chat"
 	"ttany-chat-service/middlewares"
-	"ttany-chat-service/models"
-	"ttany-chat-service/routes"
 	"ttany-chat-service/utils"
 
 	"github.com/gin-gonic/gin"
@@ -26,8 +25,10 @@ func main() {
 	utils.LoadConfig()
 	utils.LoadLogConfig()
 
-	db := models.InitDB()
+	db := utils.InitDB()
 	defer db.Close()
+
+	InitForDebug()
 
 	r := gin.New()
 
@@ -36,7 +37,7 @@ func main() {
 
 	api := r.Group("api")
 	v1 := api.Group("v1")
-	routes.LoadRoutes(v1)
+	chat.ChatRoutes(v1)
 
 	srv := &http.Server{
 		Addr:    viper.GetString("server.port"),
@@ -75,4 +76,34 @@ func ConfigRuntime() {
 	nuCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(nuCPU)
 	fmt.Printf("Running with %d CPUs\n", nuCPU)
+}
+
+func InitForDebug() {
+	db := utils.GetDB()
+	if db.DropTable(&chat.ParticipantModel{}, &chat.RoomModel{}).Error != nil {
+		log.Error("Patlaidkkkk")
+	}
+	db.AutoMigrate(&chat.ParticipantModel{}, &chat.RoomModel{})
+
+	room := chat.RoomModel{
+		RoomID:  "2671c20b-0b09-4648-8f4c-0369b284e9b4",
+		AdminID: "8fcc9a26-04d0-4f40-8eaf-3d705669acf6",
+		Name:    "Sohbet muhabbet",
+		Type:    "direct",
+		Status:  "active",
+		ParticipantModels: []chat.ParticipantModel{
+			{
+				RoomID: "2671c20b-0b09-4648-8f4c-0369b284e9b4",
+				UserID: "8fcc9a26-04d0-4f40-8eaf-3d705669acf6",
+			},
+			{
+				RoomID: "2671c20b-0b09-4648-8f4c-0369b284e9b4",
+				UserID: "cb235d43-e300-4ba6-99be-390ce0812a85",
+			},
+		},
+	}
+
+	if result := db.Save(&room); result.Error != nil {
+		log.Error("Error occured", result.Error)
+	}
 }
