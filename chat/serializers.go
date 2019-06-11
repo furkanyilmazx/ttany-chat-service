@@ -4,45 +4,58 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 )
 
 type RoomSerializer struct {
-	c *gin.Context
-	RoomModel
+	roomModel  RoomModel
+	roomModels RoomModels
 }
 
 type RoomResponse struct {
-	RoomID       string                `json:"room_id"`
-	AdminID      string                `json:"admin_id"`
-	Name         string                `json:"name"`
-	Type         string                `json:"type"`   // 'direct|group'
-	Status       string                `json:"status"` // 'closed|fraud' and so on
-	CreatedAt    time.Time             `json:"created_at"`
-	Participants []ParticipantResponse `json:"participants"`
+	RoomID    string    `json:"room_id"`
+	AdminID   string    `json:"admin_id"`
+	Name      string    `json:"name"`
+	Type      string    `json:"type"`   // 'direct|group'
+	Status    string    `json:"status"` // 'closed|fraud' and so on
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func (self *RoomSerializer) Response() RoomResponse {
-	log.Info(self)
-	participants := make([]ParticipantResponse, len(self.ParticipantModels))
-
-	for idx, _ := range participants {
-		participants[idx].UserID = self.RoomModel.ParticipantModels[idx].UserID
-		participants[idx].CreatedAt = self.RoomModel.ParticipantModels[idx].CreatedAt
-	}
 	room := RoomResponse{
-		RoomID:       self.RoomModel.RoomID,
-		AdminID:      self.RoomModel.AdminID,
-		Name:         self.RoomModel.Name,
-		Type:         self.RoomModel.Type,
-		CreatedAt:    self.RoomModel.CreatedAt,
-		Participants: participants,
+		RoomID:    self.roomModel.RoomID,
+		AdminID:   self.roomModel.AdminID,
+		Name:      self.roomModel.Name,
+		Type:      self.roomModel.Type,
+		CreatedAt: self.roomModel.CreatedAt,
+	}
+	return room
+}
+
+func (self *RoomSerializer) ResponseWithArray() []RoomResponse {
+	length := len(self.roomModels)
+	roomResponseArray := make([]RoomResponse, length)
+	for i := 0; i < len(self.roomModels); i++ {
+		self.roomModel = self.roomModels[i]
+		roomResponseArray[i] = self.Response()
 	}
 
-	return room
+	return roomResponseArray
+}
+
+type ParticipantSerializer struct {
+	c *gin.Context
+	ParticipantModel
 }
 
 type ParticipantResponse struct {
 	UserID    string    `json:"user_id" binding:"exists"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+func (self *ParticipantSerializer) Response() ParticipantResponse {
+	participant := ParticipantResponse{
+		UserID:    self.ParticipantModel.UserID,
+		CreatedAt: self.ParticipantModel.CreatedAt,
+	}
+	return participant
 }

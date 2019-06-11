@@ -2,6 +2,7 @@ package chat
 
 import (
 	"net/http"
+	"ttany-chat-service/common"
 	"ttany-chat-service/utils"
 
 	"github.com/gin-gonic/gin"
@@ -10,14 +11,22 @@ import (
 )
 
 func ChatRoomsRetrieve(c *gin.Context) {
+
+	paginationValidator := common.NewPaginationValidator()
+	p, _ := paginationValidator.BindQueryString(c, "CreatedAt", "ID")
+
+	log.Info(paginationValidator)
+
 	var rooms = RoomModels{}
-	if err := rooms.AllRooms(); err != nil {
+	if count, cursors, err := rooms.AllRoomsCursorPaginated(p); err != nil {
 		log.Error("Error Occured", err)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
+	} else {
+		serializer := RoomSerializer{roomModels: rooms}
+		c.JSON(http.StatusOK, gin.H{"_meta_data": gin.H{"count": count, "cursors": cursors}, "data": serializer.ResponseWithArray()})
 	}
-	log.Debug(rooms)
-	c.JSON(http.StatusOK, &rooms)
+
 }
 
 func ChatRoomCreate(c *gin.Context) {
@@ -32,7 +41,7 @@ func ChatRoomCreate(c *gin.Context) {
 	}
 	roomModelValitor.roomModel.CreateRoom()
 	log.Info(roomModelValitor.roomModel)
-	serializer := RoomSerializer{c, roomModelValitor.roomModel}
+	serializer := RoomSerializer{roomModel: roomModelValitor.roomModel}
 	c.JSON(http.StatusOK, serializer.Response())
 }
 
